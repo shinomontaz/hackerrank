@@ -23,9 +23,10 @@ func main() {
 
 func generateExample(N, M int) *Graph {
 	nodes := generatePoints(N)
-	//	edges := make([]*Edge, 0, M)
-	for i := 0; i < len(nodes)-1; i++ {
-		//		edges = append(edges, &Edge{Start: nodes[i], End: nodes[i+1]})
+
+	perm := rand.Perm(len(nodes) - 1)
+
+	for _, i := range perm {
 		nodes[i].Connections = append(nodes[i].Connections, nodes[i+1])
 		nodes[i+1].Connections = append(nodes[i+1].Connections, nodes[i])
 	}
@@ -77,9 +78,11 @@ type Edge struct {
 }
 */
 type Point struct {
-	Lat         float64
-	Lng         float64
+	//	Lat         float64
+	//	Lng         float64
+	ID          int
 	Connections []*Point
+	labeled     bool
 }
 
 func generatePoints(n int) []*Point {
@@ -87,11 +90,27 @@ func generatePoints(n int) []*Point {
 
 	for i := 1; i < n; i++ {
 		res = append(res, &Point{
-			Lat:         rand.Float64() * 100,
-			Lng:         rand.Float64() * 100,
+			ID:          i,
 			Connections: make([]*Point, 0),
 		})
 	}
 
 	return res
+}
+
+func DFS(graph *Graph, vertex *Point) {
+	stack := make([]*Point, 0)
+	stack = append(stack, vertex)
+
+	for len(stack) > 0 {
+		vert := stack[0]
+		stack = stack[1:]
+		if !vert.labeled {
+			vert.labeled = true
+			for _, w := range vert.Connections {
+				stack = append([]*Point{w}, stack...)
+			}
+		}
+
+	}
 }
