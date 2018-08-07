@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"math/rand"
 	"sort"
 	"time"
@@ -10,14 +11,21 @@ import (
 func main() {
 	rand.Seed(time.Now().UnixNano())
 
-	graph := generateExample(10, 20)
+	//	graph := generateExample(10, 20)
+	graph := readGraphFromCli()
 
 	for _, node := range graph.nodes {
 		fmt.Println(*node, node.Connections)
+		for _, conn := range node.Connections {
+			fmt.Println("-", conn)
+		}
 	}
 
 	// А теперь решаем!
-	start := rand.Intn(10)
+	start := graph.nodes[1 /*rand.Intn(len(graph.nodes))*/]
+
+	visited := DFS(graph, start)
+	fmt.Println(visited)
 
 }
 
@@ -35,51 +43,46 @@ func generateExample(N, M int) *Graph {
 
 		connections := make([]int, 0)
 		for _, conn := range nodes[idx1].Connections {
-			for idx, node := range nodes {
-				if node == conn {
-					connections = append(connections, idx)
-				}
-			}
+			connections = append(connections, conn.ID)
 		}
+
 		if len(nodes)-len(connections) == 0 {
 			continue
 		}
 		sort.Ints(connections)
 		idx2 := rand.Intn(len(nodes) - len(connections))
 
-		if idx2 > connections[0] {
-			shift := 0
-			for _, connIdx := range connections {
-				if idx2 < connIdx {
-					idx2 += shift
-					break
-				}
-				if idx2 == connIdx {
-					shift++
-				}
+		found := false
+		for _, conn := range nodes[idx1].Connections {
+			if conn == nodes[idx2] || conn == nodes[idx1] {
+				found = true
+				break
 			}
 		}
 
-		nodes[idx1].Connections = append(nodes[idx1].Connections, nodes[idx2])
-		nodes[idx2].Connections = append(nodes[idx2].Connections, nodes[idx1])
+		if !found {
+			nodes[idx1].Connections = append(nodes[idx1].Connections, nodes[idx2])
+		}
+		found = false
+		for _, conn := range nodes[idx2].Connections {
+			if conn == nodes[idx1] || conn == nodes[idx2] {
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			nodes[idx2].Connections = append(nodes[idx2].Connections, nodes[idx2])
+		}
 	}
 	return &Graph{nodes: nodes}
 }
 
 type Graph struct {
 	nodes []*Point
-	//	edges []*Edge
 }
 
-/*
-type Edge struct {
-	Start *Point
-	End   *Point
-}
-*/
 type Point struct {
-	//	Lat         float64
-	//	Lng         float64
 	ID          int
 	Connections []*Point
 	labeled     bool
@@ -98,7 +101,7 @@ func generatePoints(n int) []*Point {
 	return res
 }
 
-func DFS(graph *Graph, vertex *Point) {
+func DFS(graph *Graph, vertex *Point) (order []int) {
 	stack := make([]*Point, 0)
 	stack = append(stack, vertex)
 
@@ -107,10 +110,33 @@ func DFS(graph *Graph, vertex *Point) {
 		stack = stack[1:]
 		if !vert.labeled {
 			vert.labeled = true
+			order = append(order, vert.ID)
 			for _, w := range vert.Connections {
 				stack = append([]*Point{w}, stack...)
 			}
 		}
 
 	}
+
+	return order
+}
+
+func readGraphFromCli() *Graph {
+	var n, m int
+	if _, err := fmt.Scanf("%d %d", &n, &m); err != nil {
+		log.Fatalf("can'r read input: %s", err)
+	}
+
+	nodes := generatePoints(n)
+
+	var from, to int
+	for i := 0; i < m; i++ {
+		if _, err := fmt.Scanf("%d %d", &from, &to); err != nil {
+			log.Fatalf("can't read input: %s", err)
+		}
+		nodes[from].Connections = append(nodes[from].Connections, nodes[to])
+		nodes[to].Connections = append(nodes[to].Connections, nodes[from])
+	}
+
+	return &Graph{nodes: nodes}
 }
