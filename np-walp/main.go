@@ -25,7 +25,11 @@ func main() {
 	start := graph.nodes[1 /*rand.Intn(len(graph.nodes))*/]
 
 	visited := DFS(graph, start)
-	fmt.Println(visited)
+	fmt.Println(len(visited))
+
+	for _, i := range visited {
+		fmt.Printf("%d", i)
+	}
 
 }
 
@@ -134,8 +138,8 @@ func readGraphFromCli() *Graph {
 		if _, err := fmt.Scanf("%d %d", &from, &to); err != nil {
 			log.Fatalf("can't read input: %s", err)
 		}
-		nodes[from].Connections = append(nodes[from].Connections, nodes[to])
-		nodes[to].Connections = append(nodes[to].Connections, nodes[from])
+		nodes[from-1].Connections = append(nodes[from-1].Connections, nodes[to-1])
+		nodes[to-1].Connections = append(nodes[to-1].Connections, nodes[from-1])
 	}
 
 	return &Graph{nodes: nodes}
