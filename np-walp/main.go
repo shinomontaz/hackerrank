@@ -14,33 +14,39 @@ import (
 func main() {
 	rand.Seed(time.Now().UnixNano())
 
-	graph := generateExample(10, 20)
-	//	graph := readGraphFromCli()
+	//	graph := generateExample(10, 20)
+	graph := readGraphFromCli()
 	//	graph := readMock()
-
-	for _, node := range graph.nodes {
-		fmt.Println(*node, node.Connections)
-		for _, conn := range node.Connections {
-			fmt.Println("-", conn)
-		}
-	}
+	/*
+		for _, node := range graph.nodes {
+			fmt.Println(*node, node.Connections)
+			for _, conn := range node.Connections {
+				fmt.Println("-", conn)
+			}
+		}*/
 
 	// А теперь решаем!
-	start := graph.nodes[rand.Intn(len(graph.nodes))]
-	graph.nodes[start.ID-1].labeled = true
-	branches := make([][]int, 0)
-	for _, conn := range start.Connections {
-		clone := graph.Clone()
-		branches = append(branches, clone.DFS(conn))
-	}
-
-	fmt.Println(start.ID, len(branches))
-
-	for _, visited := range branches {
-		fmt.Println("-")
-		for _, i := range visited {
-			fmt.Printf("%d ", i)
+	/*	start := graph.nodes[rand.Intn(len(graph.nodes))]
+		graph.nodes[start.ID-1].labeled = true
+		branches := make([][]int, 0)
+		for _, conn := range start.Connections {
+			clone := graph.Clone()
+			branches = append(branches, clone.DFS(conn, 20))
 		}
+	*/
+
+	solution := make([]int, 0)
+	for i := 0; i < len(graph.nodes); i++ {
+		start := graph.nodes[i]
+		clone := graph.Clone()
+		solution1 := clone.DFS(start, 20)
+		if len(solution1) > len(solution) {
+			solution = solution1
+		}
+	}
+	fmt.Println(len(solution))
+	for _, i := range solution {
+		fmt.Printf("%d ", i)
 	}
 
 }
@@ -68,18 +74,20 @@ func generatePoints(n int) []*Point {
 	return res
 }
 
-func (graph *Graph) DFS(vertex *Point) (order []int) {
+func (graph *Graph) DFS(vertex *Point, deep int) (order []int) {
 	stack := make([]*Point, 0)
 	stack = append(stack, vertex)
-
-	for len(stack) > 0 {
+	i := 0
+	for len(stack) > 0 && i < deep {
 		vert := stack[0]
 		stack = stack[1:]
+		i++
 		if !vert.labeled {
 			vert.labeled = true
 			order = append(order, vert.ID)
 			for _, w := range vert.Connections {
 				stack = append([]*Point{w}, stack...)
+				i++
 			}
 		}
 
