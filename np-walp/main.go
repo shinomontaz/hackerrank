@@ -15,27 +15,10 @@ func main() {
 	rand.Seed(time.Now().UnixNano())
 
 	//	graph := generateExample(10, 20)
-	graph := readGraphFromCli()
-	//	graph := readMock()
-	/*
-		for _, node := range graph.nodes {
-			fmt.Println(*node, node.Connections)
-			for _, conn := range node.Connections {
-				fmt.Println("-", conn)
-			}
-		}*/
+	//	graph := readGraphFromCli()
+	graph := readMock()
 
-	// А теперь решаем!
-	/*	start := graph.nodes[rand.Intn(len(graph.nodes))]
-		graph.nodes[start.ID-1].labeled = true
-		branches := make([][]int, 0)
-		for _, conn := range start.Connections {
-			clone := graph.Clone()
-			branches = append(branches, clone.DFS(conn, 20))
-		}
-	*/
-
-	solution := make([]int, 0)
+	solution := make([]int, 0, len(graph.nodes))
 	for i := 0; i < len(graph.nodes); i++ {
 		start := graph.nodes[i]
 		clone := graph.Clone()
@@ -44,12 +27,47 @@ func main() {
 			solution = solution1
 		}
 	}
+
 	fmt.Println(len(solution))
 	for _, i := range solution {
 		fmt.Printf("%d ", i)
 	}
 
 }
+
+/*
+Concurrent experiment:
+
+	count := runtime.GOMAXPROCS(0)
+	sem := make(chan struct{}, count)
+	var wg sync.WaitGroup
+	solutions := make(chan []int, count)
+	solution := make([]int, 0)
+	for i := 0; i < len(graph.nodes); i++ {
+		wg.Add(1)
+		sem <- struct{}{}
+		go func(i int) {
+			defer wg.Done()
+			start := graph.nodes[i]
+			clone := graph.Clone()
+			solutions <- clone.DFS(start, 20)
+			//			if len(solution1) > len(solution) {
+			//				solution = solution1
+			//			}
+			<-sem
+		}(i)
+	}
+
+	go func() {
+		for sol := range solutions {
+			if len(sol) > len(solution) {
+				solution = sol
+			}
+		}
+	}()
+
+	wg.Wait()
+*/
 
 type Graph struct {
 	nodes []*Point
