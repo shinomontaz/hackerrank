@@ -15,24 +15,67 @@ func main() {
 	rand.Seed(time.Now().UnixNano())
 
 	//	graph := generateExample(10, 20)
-	//	graph := readGraphFromCli()
-	graph := readMock()
+	graph := readGraphFromCli()
+	//	graph := readMock()
 
 	solution := make([]int, 0, len(graph.nodes))
-	for i := 0; i < len(graph.nodes); i++ {
-		start := graph.nodes[i]
-		clone := graph.Clone()
-		solution1 := clone.DFS(start, 20)
-		if len(solution1) > len(solution) {
-			solution = solution1
+
+	if len(graph.nodes) < 10000 {
+		for i := 0; i < len(graph.nodes); i++ {
+			start := graph.nodes[i]
+			clone := graph.Clone()
+			solution1 := clone.DFS(start, 20)
+			if len(solution1) > len(solution) {
+				solution = solution1
+			}
+		}
+	} else {
+		solution = rand.Perm(len(graph.nodes))
+		for i := 0; i < len(solution); i++ {
+			cost1 := graph.cost(solution)
+			for j := 0; j < len(solution); j++ {
+				if i == j {
+					continue
+				}
+				solution[i], solution[j] = solution[j], solution[i]
+				if cost1 < graph.cost(solution) {
+					solution[i], solution[j] = solution[j], solution[i]
+				}
+			}
 		}
 	}
-
+	/*
+		for i := 0; i < len(graph.nodes); i++ {
+			start := graph.nodes[i]
+			clone := graph.Clone()
+			solution1 := clone.DFS(start, 20)
+			if len(solution1) > len(solution) {
+				solution = solution1
+			}
+		}
+	*/
 	fmt.Println(len(solution))
 	for _, i := range solution {
 		fmt.Printf("%d ", i)
 	}
 
+}
+
+func (g *Graph) cost(way []int) (cost float64) {
+	for i := 1; i < len(way); i++ {
+		exists := false
+		for _, conn := range g.nodes[i-1].Connections {
+			if conn.ID == way[i] {
+				exists = true
+				break
+			}
+		}
+
+		if !exists {
+			cost += 1000000.0
+		}
+	}
+	return cost
 }
 
 /*
